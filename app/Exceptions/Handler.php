@@ -69,6 +69,10 @@ class Handler extends ExceptionHandler
             $error_code = $e->getMessage() ?: 'http';
         }
 
+        if ($http_code === 500 and env('APP_DEBUG') === true) {
+            return env('APP_SHOW_WHOOPS_ERROR', false) ? $this->renderExceptionWithWhoops($e) : $e->__toString();
+        }
+
         $meta['code'] = $http_code;
         $meta['error'] = $error_code;
 
@@ -84,5 +88,17 @@ class Handler extends ExceptionHandler
         $name = explode('\\', $model);
 
         return strtolower(end($name));
+    }
+
+    protected function renderExceptionWithWhoops(\Exception $e)
+    {
+        $whoops = new \Whoops\Run;
+        $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
+
+        return response(
+            $whoops->handleException($e),
+            $e->getStatusCode(),
+            $e->getHeaders()
+        );
     }
 }

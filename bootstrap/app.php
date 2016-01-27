@@ -28,6 +28,12 @@ $app->register('Jenssegers\Mongodb\MongodbServiceProvider');
 $app->withFacades();
 $app->withEloquent();
 
+$configs = ['database', 'services'];
+
+foreach ($configs as $config) {
+    $app->configure($config);
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -80,7 +86,7 @@ $app->singleton(
 |
 */
 
-// $app->register(App\Providers\AppServiceProvider::class);
+ $app->register(App\Providers\AppServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
