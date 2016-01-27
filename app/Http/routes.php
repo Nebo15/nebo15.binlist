@@ -11,6 +11,10 @@
 |
 */
 
-$app->get('/', function () use ($app) {
-    return $app->version();
+$app->get('/{bin:[0-9]{6}}', function ($bin) use ($app) {
+
+    return response()->json([
+        'meta' => ['code' => 200],
+        'data' => (new \App\Services\BinList())->getJsonData($bin)
+    ]);
 });

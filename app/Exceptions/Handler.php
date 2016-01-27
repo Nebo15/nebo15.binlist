@@ -17,10 +17,11 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        AuthorizationException::class,
         HttpException::class,
-        ModelNotFoundException::class,
         ValidationException::class,
+        ModelNotFoundException::class,
+        ModelNotFoundException::class,
+        AuthorizationException::class,
     ];
 
     /**
@@ -45,6 +46,43 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
-        return parent::render($request, $e);
+        $http_code = 500;
+        $error_code = 'internal_server_error';
+        $error_message = null;
+
+        $meta = [];
+        if ($e instanceof ValidationException) {
+            return response()->json([
+                'meta' => [
+                    'code' => 422,
+                    'error' => 'validation',
+                ],
+                'data' => $e->errors(),
+            ], 422, ['Content-Type' => 'application/json']);
+
+        } elseif ($e instanceof ModelNotFoundException) {
+            $http_code = 404;
+            $error_code = $this->formatModelName($e->getModel()) . '_not_found';
+
+        } elseif ($e instanceof HttpException) {
+            $http_code = $e->getStatusCode();
+            $error_code = $e->getMessage() ?: 'http';
+        }
+
+        $meta['code'] = $http_code;
+        $meta['error'] = $error_code;
+
+        if (empty($meta['error_message']) and $error_msg = config("errors.$error_code")) {
+            $meta['error_message'] = $error_msg;
+        }
+
+        return response()->json($meta, $http_code, ['Content-Type' => 'application/json']);
+    }
+
+    private function formatModelName($model)
+    {
+        $name = explode('\\', $model);
+
+        return strtolower(end($name));
     }
 }
